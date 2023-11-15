@@ -1,0 +1,209 @@
+; Declaracion de variables
+variableA: 0b0
+Q: 0b01101000
+Q_1: 0b0
+M: 0b11101001
+count: 0x8
+
+
+INICIO_LOOP: 
+    MOV ACC, count      ; SE VERIFICA SI COUNT ES 0 PARA FINALIZAR O SEGUIR CON EL ALGORITMO
+    MOV DPTR, ACC       
+    MOV ACC, [DPTR]     
+    JZ FIN_LOOP         
+    JMP Booth 
+            
+
+
+Booth: ; inicio del algoritmo 
+    MOV ACC, Q          
+    MOV DPTR, ACC       
+    MOV ACC, [DPTR]     
+    MOV A, ACC          
+    MOV ACC, 0X01      
+    AND ACC, A          ; REALIZA AND ENTRE Q y 1 PARA OBTENER EL VALOR DEL BIT MENOS SIGNIFICATIVO Y SALTA SI ES 0
+    JZ CASOS_01_00          
+    MOV ACC, Q_1        ; SE CARGA LA VARIABLE Q_1 PARA VERIFICAR QUE COMBINACION ES
+    MOV DPTR, ACC       
+    MOV ACC, [DPTR]     
+    JZ CASO_10           ; COMBINACION [10]
+    JMP SHIFT            ; COMBINACION [11]
+
+
+CASOS_01_00: 
+    MOV ACC, Q_1        
+    MOV DPTR, ACC       ;SE CARGA Q_1 PARA TERMINAR DE VERIFICAR QUE COMBINACION SI SE DESPLIEGA LA BANDERA DE 0 SOLO SE CORRE UN BIT SI NO SE SUMA PORQUE ES UNA COMBINACION[01]
+    MOV ACC, [DPTR]     
+    JZ SHIFT             
+    JMP CASO_01           
+
+
+CASO_01:    
+MIRAR_M:        
+    MOV ACC, M          ; SE CARGA M PARA ACCEDER A SU CONTENIDO
+    MOV DPTR, ACC       
+    MOV ACC, [DPTR]     
+    MOV A, ACC          
+    MOV ACC, 0b10000000 ; CARGA 10000000 EN ACC
+    AND ACC, A          ;SE IDENTIFICA QUE SIGNO TIENE M PARA SALTAR AL RESPECTIVO BLOQUE
+    JZ SUMA_MPOSITIVO   ; SALTA AL BLOQUE DE SUMA_MPOSITIVO SI M ES POSITIVO
+    
+
+SUMA_MNEGATIVO: 
+    MOV ACC, M          ;SE CARGA M PARA ACCEDER A SU CONTENIDO
+    MOV DPTR, ACC       
+    MOV ACC, [DPTR]     
+    MOV A, ACC          ; SE ALMACENA M EN A
+    MOV ACC, 0b10000000 ; SE CARGA 10000000 EN ACC
+    ADD ACC, A          ; SE CAMBIA DE SIGNO A M
+    MOV A, ACC          ; EL RESULTADO QUEDA EN A PARA DESPUES SUMAR LA variableA CON M
+    MOV ACC, variableA  ; CARGA LA variableA
+    MOV DPTR, ACC       
+    MOV ACC, [DPTR]     
+    ADD ACC, A          
+    MOV [DPTR], ACC     ; EL RESULTADO DE LA SUMA QUEDA GUARDADO EN A
+    JMP SHIFT            ; PASA A EL SHIFT DE BITS
+
+
+SUMA_MPOSITIVO:
+    MOV ACC, M          ; CARGA M PARA ACCEDER A SU CONTENIDO
+    MOV DPTR, ACC       
+    MOV ACC, [DPTR]     
+    MOV A, ACC          
+    MOV ACC, variableA  ; CARGA variableA PARA HACER LA RESPECTIVA SUMA Y GUARDAR EL RESULTADO
+    MOV DPTR, ACC       
+    MOV ACC, [DPTR]     
+    ADD ACC, A          
+    MOV [DPTR], ACC     ; SE GUARDA EL RESULTADO EN variableA
+    JMP SHIFT            ; SALTA A EL SHIFT
+
+
+CASO_10:
+MIRAR_M:    ;NO SE PUEDE REUTILIZAR EL BLOQUE DE MIRAR_M QUE ESTA EN LA PARTE SUPERIOR DEL CODIGO YA QUE EN ESTE CASO ([10]) SE RESTA ENTONCES EL JZ ES RESTA_MPOSITIVO Y NO SUMA_MPOSITIVO
+    MOV ACC, M          ; SE CARGA M PARA ACCEDER A SU CONTENIDO
+    MOV DPTR, ACC       
+    MOV ACC, [DPTR]     
+    MOV A, ACC          
+    MOV ACC, 0b10000000 ;SE CARGA 10000000 EN ACC
+    AND ACC, A          ; SE MIRA QUE SIGNO TIENE M PARA SALTAR AL RESPECTIVO BLOQUE
+    JZ RESTA_MPOSITIVO           
+
+
+RESTA_MNEGATIVO:
+    MOV ACC, [DPTR]     ; SE CARGA M  PARA HACER COMPLEMENTO A 2
+    INV ACC             
+    MOV A, ACC          
+    MOV ACC, 0X01       ; SE CARGA EL NUMERO 1 EN ACC
+    ADD ACC, A          
+    MOV A, ACC          ; SE HACE COMPLEMENTO A 2 Y SE GUARDA EN A
+    MOV ACC, 0b10000000 
+    ADD ACC, A          ; SE CAMBIA EL SIGNO DE M
+    MOV A, ACC          
+    MOV ACC, variableA  ; SE CARGA LA variableA Y SE ACCEDE A SU CONTENIDO
+    MOV DPTR, ACC       
+    MOV ACC, [DPTR]     
+    ADD ACC, A          ; SE REALIZA LA RESTA Y SE GUARDA EN variableA
+    MOV [DPTR], ACC     
+    JMP SHIFT            ; SALTA AL SHIFT
+
+
+RESTA_MPOSITIVO:
+    MOV ACC, M          ; SE CARGA LA DIRECCION DE M PARA DESPUES ACCEDER A SU CONTENIDO Y HACER COMPLEMENTO A 2
+    MOV DPTR, ACC       
+    MOV ACC, [DPTR]     
+    INV ACC             
+    MOV A, ACC          
+    MOV ACC, 0X01       
+    ADD ACC, A          
+    MOV A, ACC          ; SE HACE COMPLEMENTO A 2 DE M Y SE GUARDA EN A
+    MOV ACC, variableA  ; SE CARGA LA variableA PARA RESTARLE M
+    MOV DPTR, ACC       
+    MOV ACC, [DPTR]     
+    ADD ACC, A          
+    MOV [DPTR], ACC     ; EL RESULTADO DE LA RESTA QUEDA EN variableA
+    JMP SHIFT            ; SALTA AL SHIFT
+
+
+SHIFT:
+        Q_Q_1: 
+            MOV ACC, Q          ; CARGA Q PARA HALLAR SU BIT MENOS SIGNIFICATIVO
+            MOV DPTR, ACC       
+            MOV ACC, [DPTR]     
+            MOV A, ACC          
+            MOV ACC, 0x01       ;SE CARGA 1 PARA HACER LA INSTRUCCION AND Y HALLAR EL BIT 
+            AND ACC, A          
+            MOV A, ACC          
+            MOV ACC, Q_1        ; SE CARGA Q_1 PARA GUARDAR EL BIT HALLADO 
+            MOV DPTR, ACC       
+            MOV ACC, A          
+            MOV [DPTR], ACC     
+
+        A_Q:        
+            MOV ACC, variableA  ; SE CARGA LA variableA PARA HALLAR SU BIT MENOS SIGNIFICATIVO
+            MOV DPTR, ACC       
+            MOV ACC, [DPTR]     
+            MOV A, ACC          
+            MOV ACC, 0x01       ;SE CARGA 1 PARA HACER EL AND Y HALLAR EL BIT MENOS SIGNIFICATIVO 
+            AND ACC, A          ;SI EL AND DA COMO RESULTADO 0 QUIERE DECIR QUE LE CORRIMIENTO PUEDE HACERSE NORMAL. 
+            JZ SHF_Q0           ;ES DECIR CORRER variableA UN BIT A LA DERECHA Y CORRER Q UN BIT A LA DERECHA 
+                                
+        SHF_Q1:                 
+            MOV ACC, Q          ; SE CARGA Q PARA ACCEDER A SU CONTENIDO Y MOVER UN BIT A LA DERECHA
+            MOV DPTR, ACC       
+            MOV ACC, [DPTR]      
+            RSH ACC, 0x01       ; SE DESPLAZA UNA POSICION A LA DERECHA EL CONTENIDO DE Q Y SE GUARDA EN A
+            MOV A, ACC          
+            MOV ACC, 0b10000000 ; SE CARGA 10000000 PORQUE EL BIT MENOS SIGNIFICATIVO DE variableA ES 1 ASI QUE DEBE SER PUESTO EN EL BIT MAS SIGNIFICATIVO DE Q
+            ADD ACC, A          ; SE SUMA PARA EMULAR EL CORRIMIENTO Y SE GUARDA EN Q
+            MOV [DPTR], ACC     
+            JMP SHF_A           ; SALTA AL ULTIMO CORRIMIENTO(EL DE variableA)
+
+        SHF_Q0: 
+            MOV ACC, Q          ; SE CARGA Q PARA HACER EL SHIFT
+            MOV DPTR, ACC       
+            MOV ACC, [DPTR]      
+            RSH ACC, 0x01       ; SE CORRE UNA POSICION A LA DERECHA AL CONTENIDO DE Q Y SE GUARDA EN Q
+            MOV [DPTR], ACC     
+            JMP SHF_A           ; SALTA AL ULTIMO SHIFT(variableA)
+
+        SHF_A: 
+            MOV ACC, variableA  ;SE CARGA LA variableA PARA VERIFICAR SU BIT MAS SIGNIFICATIVO
+            MOV DPTR, ACC       
+            MOV ACC, [DPTR]      
+            MOV A, ACC          
+            MOV ACC, 0b10000000 ; SE CARGA 10000000 PARA VERIFICAR EL BIT
+            AND ACC, A          
+            JZ SHF_A0           ; SI EL BIT ES 0 SERA UN CORRIMIENTO NORMAL, SI NO SE TENDRA EN CUENTA EL SIGNO PARA GUARDARLO Y MANTENERLO
+
+        SHF_A1: 
+            MOV ACC, variableA  ;SE CARGA LA variableA PARA ACCEDER A SU CONTENIDO
+            MOV DPTR, ACC       
+            MOV ACC, [DPTR]      
+            RSH ACC, 0x01       ; SE DESPLAZA UNA POSICION A LA DERECHA LOS BITS DE LA variableA Y SE GUARDA EL RESULTADO PARA AGREGAR 1 AL BIT MAS SIGNIFICATIVO
+            MOV A, ACC          
+            MOV ACC, 0b10000000 ;SE CARGA 10000000 PARA CONSERVAR EL SIGNO
+            ADD ACC, A          
+            MOV [DPTR], ACC     ;SE AGREGA Y SE GUARDA EN A
+            JMP DISMINUIR_CONTADOR  ;SE SALTA A DISMINUIR EL CONTADOR (count)
+
+        SHF_A0: 
+            MOV ACC, variableA  ; SE CARGA variableA PARA CORRER LOS BITS SIN TENER EN CUENTA EL SIGNO YA QUE EL SIGNO ES 0
+            MOV DPTR, ACC       
+            MOV ACC, [DPTR]      
+            RSH ACC, 0x01       ;SE DESPLAZA UNA POSICION A LA DERECHA
+            MOV [DPTR], ACC     
+            JMP DISMINUIR_CONTADOR  ;SALTA A DISMINUIR EL CONTADOR(count)
+
+DISMINUIR_CONTADOR: 
+    MOV ACC, 0xFF       ; CARGA EL NUMERO -1 PARA DISMINUIR EL CONTADOR  
+    MOV A, ACC          
+    MOV ACC, count      ; SE CARGA count  
+    MOV DPTR, ACC        
+    MOV ACC, [DPTR]      
+    ADD ACC, A          ; SE SUMAN count+(-1) = cout--     Y SE GUARDA EL RESULTADO EN count
+    MOV [DPTR], ACC     
+    JMP INICIO_LOOP     ; SE VUELVE A REPETIR HASTA QUE EL CONTADOR SEA 0
+
+
+FIN_LOOP: 
+    HLT  ;INSTRUCCION PARA QUE TERMINE EL ALGORITMO
