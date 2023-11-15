@@ -1,8 +1,8 @@
-; Declaracion de variables
+; DECLARACION DE VARIABLES
 variableA: 0b0
-Q: 0b01101000
+Q: 0b00001011
 Q_1: 0b0
-M: 0b11101001
+M: 0b00000100
 count: 0x8
 
 
@@ -11,11 +11,11 @@ INICIO_LOOP:
     MOV DPTR, ACC       
     MOV ACC, [DPTR]     
     JZ FIN_LOOP         
-    JMP Booth 
+    JMP BOOTH 
             
 
 
-Booth: ; inicio del algoritmo 
+BOOTH:  
     MOV ACC, Q          
     MOV DPTR, ACC       
     MOV ACC, [DPTR]     
